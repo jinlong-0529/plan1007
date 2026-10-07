@@ -1,1 +1,37 @@
-{"name":"delivery-workbench","version":"1.0.0","private":true,"type":"module","scripts":{"start":"node server.mjs"},"dependencies":{"mysql2":"^3.14.4"}}
+{
+  "name": "delivery-engineer-assistant",
+  "version": "1.0.0",
+  "description": "交付与运维工程师个人助手",
+  "author": "交付助手开发团队",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .", "start:web": "node server.mjs",
+    "icons": "node scripts/icons.mjs", "test": "node --test tests/*.test.mjs",
+    "pack": "electron-builder --win --dir", "dist": "electron-builder --win nsis --x64",
+    "smoke": "electron . --smoke-test", "source": "node scripts/source.mjs", "deliver": "node scripts/deliver.mjs",
+    "runtime": "node scripts/prepare-runtime.mjs"
+  },
+  "dependencies": { "docx": "9.5.1", "exceljs": "4.4.0", "mammoth": "1.11.0", "mysql2": "3.14.4" },
+  "devDependencies": { "electron": "40.0.0", "electron-builder": "26.0.12", "sharp": "0.34.3", "archiver": "7.0.1" },
+  "build": {
+    "appId": "cn.delivery.engineer.assistant", "productName": "交付工程师个人助手", "asar": true, "npmRebuild": false,
+    "electronDist": "node_modules/electron/dist",
+    "directories": { "output": "release", "buildResources": "build" },
+    "files": ["desktop/**/*", "index.html", "build/icon.ico", "package.json"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }], "icon": "build/icon.ico",
+      "artifactName": "DeliveryAssistant-Setup-${version}-${arch}.${ext}",
+      "executableName": "DeliveryAssistant", "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false, "perMachine": false, "allowToChangeInstallationDirectory": true,
+      "installerLanguages": ["zh_CN"], "language": "2052", "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico", "installerHeaderIcon": "build/icon.ico",
+      "createDesktopShortcut": true, "createStartMenuShortcut": true,
+      "shortcutName": "交付工程师个人助手", "runAfterFinish": true, "deleteAppDataOnUninstall": false
+    }
+  }
+}

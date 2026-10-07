@@ -4,11 +4,20 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="交付工程师个人工作台：任务、项目问题、知识积累与 Bug 复盘。">
-  <title>交付工作台 · 个人助手</title>
+  <title>交付工程师个人助手</title>
   <style>
     :root { --primary:#2563eb; --text:#1f2937; --background:#f8fafc; --line:color-mix(in srgb,var(--text) 11%,transparent); --muted:color-mix(in srgb,var(--text) 64%,transparent); --soft:color-mix(in srgb,var(--primary) 8%,var(--background)); }
     * { box-sizing:border-box; }
-    html { scroll-behavior:smooth; }
+    html { scroll-behavior:smooth; overflow-x:hidden; }
+    body { overflow-x:hidden; }
+    .quick-actions { flex-wrap:wrap; }
+    .page-head,.card-top { flex-wrap:wrap; }
+    .desktop-actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+    .pill { max-width:100%; white-space:normal; overflow-wrap:anywhere; }
+    .record-row { flex-wrap:wrap; }
+    .tools-panel { margin-top:20px; }
+    .tools-panel .form-pair { margin:10px 0; }
+    .tools-panel h2 { font-size:18px; }
     body { margin:0; background:var(--background); color:var(--text); font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif; }
     button,input,select,textarea { font:inherit; }
     button { cursor:pointer; }
@@ -146,7 +155,7 @@
         <div class="notice" id="notice" role="alert" hidden><span id="noticeText"></span><button class="button quiet" type="button" id="retryButton">重试</button></div>
         <!-- 今日工作概览 -->
         <section class="view" id="dashboard" aria-label="工作台">
-          <div class="overview-intro"><span class="eyebrow">TODAY · 交付概览</span><h1>今天，先处理这些事</h1><p id="todaySummary">正在加载工作数据…</p></div>
+          <div class="overview-intro"><span class="eyebrow">今日 · 交付概览</span><h1>今天，先处理这些事</h1><p id="todaySummary">正在加载工作数据…</p></div>
           <div class="quick-actions" aria-label="快捷新建">
             <button class="button" type="button" data-add="tasks">＋ 新建任务</button>
             <button class="button subtle" type="button" data-add="issues">记录问题</button>
@@ -154,6 +163,30 @@
             <button class="button subtle" type="button" data-add="bugs">Bug 复盘</button>
           </div>
           <div class="metrics" id="metrics" aria-label="工作统计"></div>
+          <section class="panel panel-pad tools-panel" id="desktopTools" hidden>
+            <h2>文件与工作总结</h2>
+            <p class="page-desc">导入文档沉淀知识，按实际完成记录生成日报。数据保存在本机，备份包含原文件。</p>
+            <div class="desktop-actions">
+              <button class="button" id="importFiles" type="button">导入知识文件</button>
+              <button class="button subtle" id="backupData" type="button">备份全部数据</button>
+              <button class="button subtle" id="restoreData" type="button">恢复备份</button>
+            </div>
+            <div class="form-pair">
+              <label class="field">导出内容<select class="select" id="exportType"><option value="daily">每日工作总结</option><option value="tasks">任务清单</option><option value="issues">项目问题</option><option value="bugs">问题处理与复盘方案</option><option value="knowledge">知识与解决方案</option></select></label>
+              <label class="field">文件格式<select class="select" id="exportFormat"><option value="docx">Word 文档（DOCX）</option><option value="md">Markdown 文档</option><option value="xlsx">Excel 表格（XLSX）</option></select></label>
+            </div>
+            <button class="button" id="exportFile" type="button">生成并导出文件</button>
+            <details class="tools-panel"><summary>连接 Plane · 单向导入项目问题</summary>
+              <p class="page-desc">将远端问题导入本地快照；本地修改不回写 Plane。密钥仅用于本次连接，不保存。</p>
+              <form id="planeForm" class="form-fields">
+                <label class="field">服务地址<input class="input" name="url" placeholder="https://plane.example.com" required></label>
+                <div class="form-pair"><label class="field">工作区标识<input class="input" name="workspace" required></label><label class="field">项目 ID<input class="input" name="project" required></label></div>
+                <label class="field">项目名称<input class="input" name="name" placeholder="便于识别的项目名称"></label>
+                <label class="field">API 密钥<input class="input" name="key" type="password" autocomplete="off" required></label>
+                <button class="button" type="submit">连接并导入</button>
+              </form>
+            </details>
+          </section>
           <div class="dashboard-grid">
             <div class="stack">
               <section><div class="section-head"><h2>近期任务</h2><button class="button quiet" type="button" data-go="tasks">查看全部</button></div><div class="panel"><ul class="record-list" id="recentTasks"></ul></div></section>
@@ -164,25 +197,25 @@
         </section>
         <!-- 交付经验知识库 -->
         <section class="view" id="knowledge" aria-labelledby="knowledgeTitle" hidden>
-          <div class="page-head"><div><span class="eyebrow">KNOWLEDGE</span><h1 id="knowledgeTitle">知识库</h1><p class="page-desc">记录经验与解决方案，随时检索复用。</p></div></div>
+          <div class="page-head"><div><span class="eyebrow">交付经验</span><h1 id="knowledgeTitle">知识库</h1><p class="page-desc">记录经验与解决方案，随时检索复用。</p></div></div>
           <div class="search-bar"><input class="input" id="knowledgeSearch" type="search" aria-label="搜索知识" placeholder="搜索标题、内容或标签"><button class="button" type="button" data-add="knowledge">＋ 新建知识</button></div>
           <div class="item-grid" id="knowledgeList"></div>
         </section>
         <!-- 个人任务清单 -->
         <section class="view" id="tasks" aria-labelledby="tasksTitle" hidden>
-          <div class="page-head"><div><span class="eyebrow">TASKS</span><h1 id="tasksTitle">任务</h1><p class="page-desc">按优先级和截止日期推进交付工作。</p></div></div>
+          <div class="page-head"><div><span class="eyebrow">当天安排</span><h1 id="tasksTitle">任务</h1><p class="page-desc">按优先级和截止日期推进交付工作。</p></div></div>
           <div class="search-bar"><input class="input" id="taskSearch" type="search" aria-label="搜索任务" placeholder="搜索任务或项目"><select class="select" id="taskFilter" aria-label="筛选任务状态"><option value="全部">全部状态</option><option>待处理</option><option>进行中</option><option>已完成</option></select><button class="button" type="button" data-add="tasks">＋ 新建任务</button></div>
           <div class="item-grid" id="taskList"></div>
         </section>
         <!-- 项目问题跟踪 -->
         <section class="view" id="issues" aria-labelledby="issuesTitle" hidden>
-          <div class="page-head"><div><span class="eyebrow">ISSUES</span><h1 id="issuesTitle">项目问题</h1><p class="page-desc">集中记录客户反馈与当前处理状态。</p></div></div>
+          <div class="page-head"><div><span class="eyebrow">项目跟进</span><h1 id="issuesTitle">项目问题</h1><p class="page-desc">集中记录客户反馈与当前处理状态。</p></div></div>
           <div class="search-bar"><input class="input" id="issueSearch" type="search" aria-label="搜索项目问题" placeholder="搜索问题、项目或来源"><select class="select" id="issueFilter" aria-label="筛选问题状态"><option value="全部">全部状态</option><option>待确认</option><option>跟进中</option><option>已解决</option></select><button class="button" type="button" data-add="issues">＋ 新建问题</button></div>
           <div class="item-grid" id="issueList"></div>
         </section>
         <!-- Bug 定位与复盘 -->
         <section class="view" id="bugs" aria-labelledby="bugsTitle" hidden>
-          <div class="page-head"><div><span class="eyebrow">BUG REVIEW</span><h1 id="bugsTitle">Bug 复盘</h1><p class="page-desc">保存现象、根因与预防措施，形成可复用的排查记录。</p></div></div>
+          <div class="page-head"><div><span class="eyebrow">问题定位与复盘</span><h1 id="bugsTitle">Bug 复盘</h1><p class="page-desc">保存现象、根因与预防措施，形成可复用的排查记录。</p></div></div>
           <div class="search-bar"><input class="input" id="bugSearch" type="search" aria-label="搜索 Bug 复盘" placeholder="搜索标题、项目、现象或根因"><button class="button" type="button" data-add="bugs">＋ 新建复盘</button></div>
           <div class="item-grid bug-grid" id="bugList"></div>
         </section>
@@ -201,6 +234,7 @@
     const $ = selector => document.querySelector(selector);
     let data = { knowledge:[], tasks:[], issues:[], bugs:[] };
     let entryType = '';
+    let editingId = '';
     let toastTimer;
     const routes = new Set(['dashboard','knowledge','tasks','issues','bugs']);
     const esc = value => String(value ?? '').replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
@@ -254,7 +288,22 @@
       const items=data.bugs.filter(item=>match(item,q,['title','project','symptom','root','prevention']));
       $('#bugList').innerHTML=items.length?items.map(bug=>`<article class="panel item-card bug-card"><div class="card-top"><h2>${esc(bug.title)}</h2><span class="pill">${esc(bug.project)}</span></div><div class="bug-detail"><span class="detail-label">现象与影响</span><p>${esc(bug.symptom)}</p></div><div class="bug-detail"><span class="detail-label">根因分析</span><p>${esc(bug.root)}</p></div><div class="bug-detail"><span class="detail-label">解决与预防</span><p>${esc(bug.prevention)}</p></div><div class="card-meta">复盘于 ${esc(displayDate(bug.date))}</div></article>`).join(''):empty(q?'没有匹配的复盘':'还没有 Bug 复盘',q?'换个关键词试试':'点击“新建复盘”记录一次排查');
     }
-    function renderAll() { renderDashboard(); renderKnowledge(); renderTasks(); renderIssues(); renderBugs(); }
+    function renderAll() {
+      renderDashboard(); renderKnowledge(); renderTasks(); renderIssues(); renderBugs();
+      if(window.desktop) for(const type of ['knowledge','tasks','issues','bugs']) decorateRecords(type);
+    }
+    function decorateRecords(type) {
+      const containers={knowledge:'knowledgeList',tasks:'taskList',issues:'issueList',bugs:'bugList'};
+      const searches={knowledge:'knowledgeSearch',tasks:'taskSearch',issues:'issueSearch',bugs:'bugSearch'};
+      const fields={knowledge:['title','content','tags'],tasks:['title','project'],issues:['title','project','source'],bugs:['title','project','symptom','root','prevention']};
+      const q=$('#'+searches[type]).value.trim().toLocaleLowerCase();
+      const filter=type==='tasks'?$('#taskFilter').value:type==='issues'?$('#issueFilter').value:'全部';
+      const items=data[type].filter(item=>(filter==='全部'||item.status===filter)&&match(item,q,fields[type]));
+      $('#'+containers[type]).querySelectorAll('article').forEach((card,index)=>{
+        if(!items[index])return;
+        card.insertAdjacentHTML('beforeend',`<div class="desktop-actions"><button class="button quiet" data-edit="${type}" data-id="${esc(items[index].id)}">编辑记录</button><button class="button quiet" data-delete="${type}" data-id="${esc(items[index].id)}">删除记录</button></div>`);
+      });
+    }
     const field = (name,label,type='text',options=[],optional=false,placeholder='') => {
       const id=`field-${name}`,required=optional?'':' required',hint=optional?'<span class="optional">（可选）</span>':'';
       if(type==='textarea') return `<label class="field" for="${id}"><span>${label} ${hint}</span><textarea class="textarea" id="${id}" name="${name}" placeholder="${placeholder}"${required}></textarea></label>`;
@@ -267,13 +316,23 @@
       issues:{title:'新建项目问题',html:()=>field('title','问题描述','textarea')+field('project','所属项目')+`<div class="form-pair">${field('source','问题来源','select',['客户群聊','飞书文档','腾讯文档','现场沟通','其他'])}${field('status','状态','select',['待确认','跟进中','已解决'])}</div>`},
       bugs:{title:'新建 Bug 复盘',html:()=>field('title','Bug 标题')+field('project','所属项目')+field('symptom','现象与影响','textarea')+field('root','根因分析','textarea')+field('prevention','解决方案与预防措施','textarea')}
     };
-    function openEntry(type) {
+    function openEntry(type, record=null) {
       if (!forms[type]) return;
       entryType=type; $('#dialogTitle').textContent=forms[type].title; $('#formFields').innerHTML=forms[type].html();
       $('#entryForm').reset(); if(type==='tasks') $('#field-due').value=localDate();
+      editingId=record?.id || '';
+      if(record) {
+        $('#dialogTitle').textContent='编辑记录';
+        for(const element of $('#entryForm').elements) if(element.name && record[element.name]!=null) element.value=record[element.name];
+      }
       $('#entryDialog').showModal(); $('#formFields').querySelector('input,textarea,select')?.focus();
     }
     async function apiRequest(url,options) {
+      if (window.desktop) {
+        const response = await window.desktop.request(url, options);
+        if (response.error) throw new Error(response.error);
+        return response.result;
+      }
       const response=await fetch(url,options);
       let body={}; try { body=await response.json(); } catch {}
       if(!response.ok) throw new Error(body.error||`请求失败（${response.status}）`);
@@ -284,12 +343,19 @@
         const response=await apiRequest('/api/data');
         data={knowledge:list(response.knowledge),tasks:list(response.tasks),issues:list(response.issues),bugs:list(response.bugs)};
         hideNotice(); renderAll();
-      } catch(error) { showNotice(`无法加载数据：${error.message}。请确认服务已启动。`); }
+      } catch(error) { showNotice(`无法加载数据：${error.message}。请重试或重启应用。`); }
     }
-    document.addEventListener('click',event=>{
+    document.addEventListener('click',async event=>{
       const nav=event.target.closest('[data-view]'); if(nav) showView(nav.dataset.view);
       const go=event.target.closest('[data-go]'); if(go) showView(go.dataset.go);
       const add=event.target.closest('[data-add]'); if(add) openEntry(add.dataset.add);
+      const edit=event.target.closest('[data-edit]');
+      if(edit) openEntry(edit.dataset.edit,data[edit.dataset.edit].find(item=>item.id===edit.dataset.id));
+      const remove=event.target.closest('[data-delete]');
+      if(remove) try {
+        const reply=await apiRequest(`/api/${remove.dataset.delete}/${encodeURIComponent(remove.dataset.id)}`,{method:'DELETE'});
+        if(!reply.cancelled){await loadData();toast('记录已删除');}
+      }catch(error){toast(error.message);}
     });
     $('#entryForm').addEventListener('submit',async event=>{
       event.preventDefault();
@@ -297,7 +363,7 @@
       const item=Object.fromEntries(new FormData(event.currentTarget));
       if(entryType==='knowledge'||entryType==='bugs') item.date=localDate();
       try {
-        await apiRequest(`/api/${entryType}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)});
+        await apiRequest(`/api/${entryType}${editingId?`/${encodeURIComponent(editingId)}`:''}`,{method:editingId?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(item)});
         $('#entryDialog').close(); await loadData(); toast('记录已保存');
       } catch(error) { toast(`保存失败：${error.message}`); }
       finally { save.disabled=false; save.textContent='保存记录'; }
@@ -325,11 +391,46 @@
     $('#closeDialog').addEventListener('click',()=>$('#entryDialog').close());
     $('#cancelDialog').addEventListener('click',()=>$('#entryDialog').close());
     $('#retryButton').addEventListener('click',loadData);
-    ['knowledgeSearch','taskSearch','issueSearch','bugSearch'].forEach((id,index)=>$('#'+id).addEventListener('input',[renderKnowledge,renderTasks,renderIssues,renderBugs][index]));
-    $('#taskFilter').addEventListener('change',renderTasks);
-    $('#issueFilter').addEventListener('change',renderIssues);
+    ['knowledgeSearch','taskSearch','issueSearch','bugSearch'].forEach(id=>$('#'+id).addEventListener('input',renderAll));
+    $('#taskFilter').addEventListener('change',renderAll);
+    $('#issueFilter').addEventListener('change',renderAll);
     $('#headerDate').dateTime=localDate();
     $('#headerDate').textContent=new Intl.DateTimeFormat('zh-CN',{month:'long',day:'numeric',weekday:'long'}).format(new Date());
+    if (window.desktop) {
+      $('#desktopTools').hidden=false;
+      $('.site-footer').textContent='交付工程师个人助手 · 数据保存在当前 Windows 用户本机 · 版本 1.0.0';
+      // 所有文件操作都由主进程弹出系统选择框，页面不接受任意磁盘路径。
+      async function runDesktop(button, operation, success) {
+        button.disabled=true;
+        try {
+          const response=await operation();
+          if(response.error) throw new Error(response.error);
+          if(response.result?.cancelled) return;
+          await loadData(); toast(typeof success==='function'?success(response.result):success);
+        } catch(error) { toast(error.message); }
+        finally {button.disabled=false;}
+      }
+      $('#importFiles').addEventListener('click',event=>runDesktop(event.currentTarget,()=>window.desktop.importFiles(),result=>{
+        const passed=result.results.filter(item=>item.ok).length;
+        const failed=result.results.filter(item=>!item.ok);
+        if(failed.length) showNotice(failed.map(item=>`${item.file}：${item.error}`).join('；'));
+        return `已导入 ${passed} 个文件${failed.length?`，${failed.length} 个未成功`:''}`;
+      }));
+      $('#backupData').addEventListener('click',event=>runDesktop(event.currentTarget,()=>window.desktop.backup(),'完整备份已保存'));
+      $('#restoreData').addEventListener('click',event=>runDesktop(event.currentTarget,()=>window.desktop.restore(),'备份已恢复'));
+      $('#exportFile').addEventListener('click',event=>{
+        const type=$('#exportType').value,format=$('#exportFormat').value;
+        if(type==='daily' && format==='xlsx') {toast('日报请选择 Word 或 Markdown 格式。');return;}
+        runDesktop(event.currentTarget,()=>window.desktop.exportFile(type,format),'文件已导出');
+      });
+      $('#planeForm').addEventListener('submit',event=>{
+        event.preventDefault();
+        const settings=Object.fromEntries(new FormData(event.currentTarget));
+        const button=event.currentTarget.querySelector('button');
+        runDesktop(button,()=>window.desktop.plane(settings),result=>`已导入或更新 ${result.count} 个 Plane 问题`);
+        event.currentTarget.elements.key.value='';
+      });
+    }
     renderAll(); loadData();
   </script>
 </body>

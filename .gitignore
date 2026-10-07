@@ -3,6 +3,9 @@
 .env.*
 !.env.example
 node_modules/
+release/
+delivery/
+.build-cache/
 
 # 数据库、日志与编辑器文件
 data/
